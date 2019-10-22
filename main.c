@@ -104,13 +104,26 @@ int main(void) {
     } else {
         // Receiver code
         int receiveArray[] = {0, 0, 0, 0, 0};
-        while(!readStartTransmission()) {}
-        delay(10);
-        for(int i = 0; i < 5; i++) {
-            receiveArray[i] = readChar();
+        
+        while(1) {
+            while(!readStartTransmission()) {}
             delay(10);
+            for(int i = 0; i < 5; i++) {
+                receiveArray[i] = readChar();
+                delay(10);
+            }
+
+            //delay(255);
+            // retransmit data
+            sendStartTransmission();
+            delay(10);
+            for(int i = 0; i < 5; i++) {
+                sendChar(receiveArray[i]);
+                delay(10);
+            }
+            PORTD = 0x00;
+            delay(255);
         }
-        delay(255);
     }
     
     
