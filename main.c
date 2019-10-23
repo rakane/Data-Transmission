@@ -117,8 +117,9 @@ int readStartTransmission() {
 
 int main(void) {
     // Set GPIO port directions
-    DDRD = 0xFF;
+    DDRB = 0xFF;
     DDRC = 0x00;
+    DDRD = 0xFF;
     // timer pre-scalar set to 1024, creating clock period of 1.02 ms
     TCCR0B = 0x05;
     
