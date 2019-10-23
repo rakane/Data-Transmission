@@ -6,7 +6,10 @@
 
 #include <xc.h>
 
+
 #define BAUD_RATE 200
+#define RESET_DELAY 255
+#define MESSAGE_LENGTH 5
 
 
 #define TRANSMIT 1  // 1 for transmitter, 0 for reciever
@@ -27,6 +30,14 @@ void delay(int ms){
     return;
 }
 
+int checkStart() {
+    if(PINC == 0x01) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 /* Function: sendChar
  * --------------------------------------------------------
  * Sends integer c in form of 8-bit binary number using transmission protocol 
@@ -36,6 +47,10 @@ void delay(int ms){
  */
 void sendChar(int c) {
     int tx_bit;
+    
+    // Send start bit
+    PORTD = 0x00;
+    delay(1000 / BAUD_RATE);
     
     // loops through each bit in the integer byte
     for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
@@ -50,6 +65,11 @@ void sendChar(int c) {
         }
         delay(1000 / BAUD_RATE);
     }
+    
+    // Send 2 stop bits
+    PORTD = 0x01;
+    delay((1000 / BAUD_RATE) * 2);
+
 }
 
 /* Function: readChar
@@ -60,9 +80,17 @@ void sendChar(int c) {
  *  number received from transmitter
  */
 int readChar() {
+    int prev = 1;
+    int new;
     int input_bit;
     int data_byte = 0;
     int scalar = 128;
+    
+    new = !checkStart(prev);
+    while (!(new == 0 && prev == 1)) {
+        prev = new;
+        new = checkStart(prev);
+    }
     
     for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
         input_bit = PINC;
@@ -70,52 +98,12 @@ int readChar() {
         scalar = scalar / 2;
         delay(1000 / BAUD_RATE);
     }
+    
+    delay((1000 / BAUD_RATE) * 2);
     
     return data_byte;
 }
 
-/* Function: sendStartTransmission
- * --------------------------------------------------------
- * Sends integer 2 in form of 8-bit binary number using transmission protocol
- * Signifies the start of transmission to receiver
- */
-void sendStartTransmission() {
-    int c = 2;
-    int tx_bit;
-    
-    for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
-        tx_bit = c & (0x80 >> bit_idx); 
-        if(tx_bit) {
-            PORTD = 0x01;
-        } else {
-            PORTD = 0x00;
-        }
-        delay(1000 / BAUD_RATE);
-    }
-}
-
-/* Function: readStartTransmission
- * --------------------------------------------------------
- * Reads input from transmitter and compares it with 2, the number signifying
- * the start of transmission
- */
-int readStartTransmission() {
-    int input_bit;
-    int data_byte = 0;
-    int scalar = 128;
-    
-    for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
-        input_bit = PINC;
-        data_byte += scalar * input_bit;
-        scalar = scalar / 2;
-        delay(1000 / BAUD_RATE);
-    }
-    
-    if(data_byte == 2) {
-        return 1;
-    }
-    return 0;
-}
 
 int main(void) {
     // Set GPIO port directions
@@ -130,29 +118,25 @@ int main(void) {
     if(TRANSMIT) {
         // Transmitter code
         int transmitArray[] = {'H', 'E', 'L', 'L', 'O'};
-    
+        PORTD = 0x01;
+        delay(255);
+        delay(255);
+        delay(255);
+        delay(255);
         while(1){
-            sendStartTransmission();
-            delay(10);
             for(int i = 0; i < 5; i++) {
                 sendChar(transmitArray[i]);
-                delay(10);
             }
-            PORTD = 0x00;
-            delay(255);
         }
     } else {
         // Receiver code
-        int receiveArray[] = {0, 0, 0, 0, 0};
+        int receiveArray[MESSAGE_LENGTH] = { 0 };
         
         while(1) {
-            while(!readStartTransmission()) {}
-            delay(10);
             for(int i = 0; i < 5; i++) {
                 receiveArray[i] = readChar();
-                delay(10);
+                delay((1000 / BAUD_RATE) * 2);
             }
-            delay(255);
         }
     }
     
