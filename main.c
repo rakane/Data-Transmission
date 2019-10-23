@@ -38,12 +38,14 @@ void waitStart() {
     int prev = 1;
     int new;
     
-    new = PINC;
+    new = PINC & 0x01;
+    delay(1000 / BAUD_RATE);
     
     // waits for start signal (transition from idle to 0, or stop bit to 0)
     while (!(new == 0 && prev == 1)) {
         prev = new;
         new = PINC;
+        delay(1000 / BAUD_RATE);
     }
     
     return;
@@ -95,18 +97,41 @@ int readChar() {
     int data_byte = 0;
     int scalar = 128;
     
+    waitStart();
     for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
         input_bit = PINC;
         data_byte += scalar * input_bit;
         scalar = scalar / 2;
         delay(1000 / BAUD_RATE);
     }
-    
+    // delay during stop signal for right now, instead of detecting
     delay((1000 / BAUD_RATE) * 2);
     
     return data_byte;
 }
 
+
+/* Function: calculateEvenParity
+ * --------------------------------------------------------
+ * Takes in an integer as a parameter, and returns 1 if it has odd parity,
+ * and 0 if it has even parity
+ * 
+ * @param c
+ *  integer parameter, parity bit is calculated for this integer
+ * 
+ * @return 
+ *  1 if parity is odd, 0 if parity is even
+ */
+int calculateEvenParity(int c) {
+    int parity = 0;
+    
+    while (c) {
+       parity = !parity;
+       c = c & (c - 1);
+    }
+    
+    return parity;
+}
 
 int main(void) {
     // Set GPIO port directions
