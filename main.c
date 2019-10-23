@@ -1,6 +1,6 @@
 /*
  * File:   main.c
- * Author: Ryan Kane
+ * Author: Ryan Kane and Isaiah Plummer
  * Version: 1.0
  */
 
@@ -147,20 +147,9 @@ int main(void) {
                 receiveArray[i] = readChar();
                 delay(10);
             }
-
-            //delay(255);
-            // retransmit data
-            sendStartTransmission();
-            delay(10);
-            for(int i = 0; i < 5; i++) {
-                sendChar(receiveArray[i]);
-                delay(10);
-            }
-            PORTD = 0x00;
             delay(255);
         }
     }
-    
     
     return 0;
 }
