@@ -6,7 +6,11 @@
 
 #include <xc.h>
 
+#define BAUD_RATE 200
+
+
 #define TRANSMIT 1  // 1 for transmitter, 0 for reciever
+
 
 /* Function: delay
  * --------------------------------------------------------
@@ -31,12 +35,11 @@ void delay(int ms){
  *  length of delay in ms, as timer clock period is 1.02 ms
  */
 void sendChar(int c) {
-    
     int tx_bit;
     
     // loops through each bit in the integer byte
-    for(int bit_id = 0; bit_id < 8; bit_id++) {
-        tx_bit = c & (0x80 >> bit_id); 
+    for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
+        tx_bit = c & (0x80 >> bit_idx); 
         
         // if bit is a 1, transmit high
         // else transmit low 
@@ -45,7 +48,7 @@ void sendChar(int c) {
         } else {
             PORTD = 0x00;
         }
-        delay(5);
+        delay(1000 / BAUD_RATE);
     }
 }
 
@@ -57,38 +60,37 @@ void sendChar(int c) {
  *  number received from transmitter
  */
 int readChar() {
-    int input;
-    int data = 0;
+    int input_bit;
+    int data_byte = 0;
     int scalar = 128;
     
-    for(int i = 0; i < 8; i++) {
-        input = PINC;
-        data += scalar * input;
+    for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
+        input_bit = PINC;
+        data_byte += scalar * input_bit;
         scalar = scalar / 2;
-        delay(5);
+        delay(1000 / BAUD_RATE);
     }
     
-    return data;
+    return data_byte;
 }
 
 /* Function: sendStartTransmission
  * --------------------------------------------------------
  * Sends integer 2 in form of 8-bit binary number using transmission protocol
- * Signifies the start of transmission to reciever
+ * Signifies the start of transmission to receiver
  */
 void sendStartTransmission() {
     int c = 2;
-    
     int tx_bit;
     
-    for(int bit_id = 0; bit_id < 8; bit_id++) {
-        tx_bit = c & (0x80 >> bit_id); 
+    for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
+        tx_bit = c & (0x80 >> bit_idx); 
         if(tx_bit) {
             PORTD = 0x01;
         } else {
             PORTD = 0x00;
         }
-        delay(5);
+        delay(1000 / BAUD_RATE);
     }
 }
 
@@ -98,18 +100,18 @@ void sendStartTransmission() {
  * the start of transmission
  */
 int readStartTransmission() {
-    int input;
-    int data = 0;
+    int input_bit;
+    int data_byte = 0;
     int scalar = 128;
     
-    for(int i = 0; i < 8; i++) {
-        input = PINC;
-        data += scalar * input;
+    for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
+        input_bit = PINC;
+        data_byte += scalar * input_bit;
         scalar = scalar / 2;
-        delay(5);
+        delay(1000 / BAUD_RATE);
     }
     
-    if(data == 2) {
+    if(data_byte == 2) {
         return 1;
     }
     return 0;
@@ -120,7 +122,9 @@ int main(void) {
     DDRB = 0xFF;
     DDRC = 0x00;
     DDRD = 0xFF;
-    // timer pre-scalar set to 1024, creating clock period of 1.02 ms
+    
+    // timer pre-scalar set to 1024
+    // Creates a 976.5 Hz clock, or 1.02 ms period
     TCCR0B = 0x05;
     
     if(TRANSMIT) {
