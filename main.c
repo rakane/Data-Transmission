@@ -8,11 +8,11 @@
 
 
 #define BAUD_RATE 200
-#define RESET_DELAY 255
 #define MESSAGE_LENGTH 5
+#define TIMER_SCALAR 0x05
 
 
-#define TRANSMIT 1  // 1 for transmitter, 0 for reciever
+#define TRANSMIT 0  // 1 for transmitter, 0 for reciever
 
 
 /* Function: delay
@@ -30,12 +30,23 @@ void delay(int ms){
     return;
 }
 
-int checkStart() {
-    if(PINC == 0x01) {
-        return 1;
-    } else {
-        return 0;
+/* Function: waitStart
+ * --------------------------------------------------------
+ * Waits for start bit from the transmitter, then returns
+ */
+void waitStart() {
+    int prev = 1;
+    int new;
+    
+    new = PINC;
+    
+    // waits for start signal (transition from idle to 0, or stop bit to 0)
+    while (!(new == 0 && prev == 1)) {
+        prev = new;
+        new = PINC;
     }
+    
+    return;
 }
 
 /* Function: sendChar
@@ -80,17 +91,9 @@ void sendChar(int c) {
  *  number received from transmitter
  */
 int readChar() {
-    int prev = 1;
-    int new;
     int input_bit;
     int data_byte = 0;
     int scalar = 128;
-    
-    new = !checkStart(prev);
-    while (!(new == 0 && prev == 1)) {
-        prev = new;
-        new = checkStart(prev);
-    }
     
     for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
         input_bit = PINC;
@@ -113,17 +116,17 @@ int main(void) {
     
     // timer pre-scalar set to 1024
     // Creates a 976.5 Hz clock, or 1.02 ms period
-    TCCR0B = 0x05;
+    TCCR0B = TIMER_SCALAR;
     
     if(TRANSMIT) {
         // Transmitter code
         int transmitArray[] = {'H', 'E', 'L', 'L', 'O'};
-        PORTD = 0x01;
-        delay(255);
-        delay(255);
-        delay(255);
-        delay(255);
         while(1){
+            PORTD = 0x01;
+            delay(255);
+            delay(255);
+            delay(255);
+            delay(255);
             for(int i = 0; i < 5; i++) {
                 sendChar(transmitArray[i]);
             }
@@ -135,7 +138,13 @@ int main(void) {
         while(1) {
             for(int i = 0; i < 5; i++) {
                 receiveArray[i] = readChar();
-                delay((1000 / BAUD_RATE) * 2);
+               // delay((1000 / BAUD_RATE) * 2);
+            }
+            
+            // display message on PORTB
+            for(int c = 0; c < MESSAGE_LENGTH; c++) {
+                PORTB = receiveArray[c];
+                delay(100);
             }
         }
     }
