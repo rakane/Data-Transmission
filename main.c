@@ -105,8 +105,6 @@ int readChar() {
         delay(1000 / BAUD_RATE);
     }
     
-    PORTB &= 0xFD;
-    
     // delay during stop signal for right now, instead of detecting
     delay((1000 / BAUD_RATE) * 2);
     
@@ -114,22 +112,22 @@ int readChar() {
 }
 
 int main(void) {
-    // Set GPIO port directions
-    DDRB = 0xFF;
-    DDRC = 0x00;
-    DDRD = 0xFF;
-    
+
     // timer pre-scalar set to 1024
     // Creates a 976.5 Hz clock, or 1.02 ms period
     TCCR0B = TIMER_SCALAR;
     
     if(TRANSMIT) {
+        
+        // Set GPIO port directions
+        DDRD = 0x01;
+
         // Transmitter code
         int transmitArray[MESSAGE_LENGTH] = {'H', 'E', 'L', 'L', 'O'};
         
         while(1){
             // Start Idle signal
-            PORTD = 0xFF;
+            PORTD = 0x01;
             
             //delay approx 10 seconds
             for(int i = 0; i < 40; i++) {
@@ -142,9 +140,15 @@ int main(void) {
             }
         }
     } else {
+        
+        // Set GPIO port directions
+        DDRD = 0xFF;
+        DDRC = 0x00;
+        
         // Receiver code
         int receiveArray[MESSAGE_LENGTH] = { 0 };
         
+        // Display 1 on PORTD, showing receiver has started
         PORTD = 0x01;
         
         while(1) {
@@ -153,7 +157,7 @@ int main(void) {
                 receiveArray[i] = readChar();
             }
             
-            // display message on PORTB
+            // display message on PORTD
             for(int c = 0; c < MESSAGE_LENGTH; c++) {
                 PORTD = receiveArray[c];
                 for(int i = 0; i < 8; i++) {
