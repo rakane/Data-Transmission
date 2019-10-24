@@ -11,7 +11,7 @@
 #define TIMER_SCALAR 0x05
 
 
-#define TRANSMIT 0  // 1 for transmitter, 0 for reciever
+#define TRANSMIT 1  // 1 for transmitter, 0 for reciever
 
 
 /* Function: delay
@@ -98,6 +98,8 @@ int readChar() {
     int scalar = 128;
     
     waitStart();
+    
+    // Read in data bit by bit
     for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
         input_bit = PINC;
         data_byte += scalar * input_bit;
@@ -121,6 +123,7 @@ int main(void) {
         
         // Set GPIO port directions
         DDRD = 0x01;
+        DDRB = 0x02;
 
         // Transmitter code
         int transmitArray[MESSAGE_LENGTH] = {'H', 'E', 'L', 'L', 'O'};
@@ -134,10 +137,16 @@ int main(void) {
                 delay(255);
             }
             
+            // Put PB1 pin high, connected to LED for start signal visual
+            PORTB = 0x02;
+            
             // Send data
             for(int i = 0; i < MESSAGE_LENGTH; i++) {
                 sendChar(transmitArray[i]);
             }
+            
+            // Put PB1 pin back to low
+            PORTB = 0x00;
         }
     } else {
         
