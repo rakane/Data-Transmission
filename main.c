@@ -147,12 +147,14 @@ int main(void) {
         // Transmitter code
         int transmitArray[] = {'H', 'E', 'L', 'L', 'O'};
         while(1){
-            PORTD = 0x01;
-            delay(255);
-            delay(255);
-            delay(255);
-            delay(255);
-            for(int i = 0; i < 5; i++) {
+            PORTD = 0xFF;
+            
+            //delay approx 10 seconds
+            for(int i = 0; i < 40; i++) {
+                delay(255);
+            }
+            
+            for(int i = 0; i < MESSAGE_LENGTH; i++) {
                 sendChar(transmitArray[i]);
             }
         }
@@ -161,15 +163,17 @@ int main(void) {
         int receiveArray[MESSAGE_LENGTH] = { 0 };
         
         while(1) {
-            for(int i = 0; i < 5; i++) {
+            for(int i = 0; i < MESSAGE_LENGTH; i++) {
                 receiveArray[i] = readChar();
                // delay((1000 / BAUD_RATE) * 2);
             }
             
             // display message on PORTB
             for(int c = 0; c < MESSAGE_LENGTH; c++) {
-                PORTB = receiveArray[c];
-                delay(100);
+                PORTD = receiveArray[c];
+                for(int i = 0; i < 8; i++) {
+                    delay(250);
+                }
             }
         }
     }
