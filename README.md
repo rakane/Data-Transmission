@@ -13,7 +13,7 @@ NRESET (pin 6) | PC6 (pin 1)
 MOSI (pin 7) | PB3 (pin 17)
 
 
-In the code, the constant TRANSMIT is used to set the ATmegs328P as the transmitter or receiver. One ATmega is used as the transmitter, and one as the receiver. The data framing is show as below, using 2 stop bits and no parity bit as of right now.
+In the code, the constant TRANSMIT is used to set the ATmegs328P as the transmitter or receiver. One ATmega is used as the transmitter, and one as the receiver. The data framing is show as below, using 2 stop bits, no parity bit, and sends the most significant bit first:
 ![Data Framing](assets/TransmissionFrame.PNG)
 [Helpful article and image source](https://forum.arduino.cc/index.php?topic=479134.0)
 
