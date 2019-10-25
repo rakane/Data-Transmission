@@ -11,7 +11,7 @@
 #define TIMER_SCALAR 0x05
 
 
-#define TRANSMIT 1  // 1 for transmitter, 0 for reciever
+#define TRANSMIT 0  // 1 for transmitter, 0 for reciever
 
 
 /* Function: delay
@@ -38,16 +38,12 @@ void waitStart() {
     int new;
     
     new = PINC & 0x01;
-    delay(1000 / BAUD_RATE);
     
     // waits for start signal (transition from idle to 0, or stop bit to 0)
     while (!(new == 0 && prev == 1)) {
         prev = new;
-        new = PINC;
-        delay(1000 / BAUD_RATE);
+        new = PINC & 0x01;
     }
-    
-    PORTB |= 0x02;
     
     return;
 }
@@ -99,6 +95,9 @@ int readChar() {
     
     waitStart();
     
+    // Drive PB1 high, indicating that a start signal has been detected
+    PORTB = 0x02;
+    
     // Read in data bit by bit
     for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
         input_bit = PINC;
@@ -108,7 +107,10 @@ int readChar() {
     }
     
     // delay during stop signal for right now, instead of detecting
-    delay((1000 / BAUD_RATE) * 2);
+    delay((1000 / BAUD_RATE));
+    // Drive PB1 low, reseting start signal indicator
+    PORTB = 0x00;
+    delay((1000 / BAUD_RATE));
     
     return data_byte;
 }
@@ -153,6 +155,7 @@ int main(void) {
         // Set GPIO port directions
         DDRD = 0xFF;
         DDRC = 0x00;
+        DDRB = 0x02;
         
         // Receiver code
         int receiveArray[MESSAGE_LENGTH] = { 0 };
