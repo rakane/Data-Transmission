@@ -1,17 +1,16 @@
 /*
  * File:   main.c
- * Author: Ryan Kane and Isaiah Plummer
+ * Author: Ryan Kane
  * Version: 1.0
  */
 
 #include <xc.h>
 
-#define BAUD_RATE 200
+#define BAUD_RATE 10
 #define MESSAGE_LENGTH 5
 #define TIMER_SCALAR 0x05
-
-
-#define TRANSMIT 0  // 1 for transmitter, 0 for reciever
+#define RESET_DELAY 5
+#define TRANSMIT 1  // 1 for transmitter, 0 for reciever
 
 
 /* Function: delay
@@ -26,7 +25,6 @@ void delay(int ms){
     OCR0A = ms; //length of delay
     TIFR0 = 0x02;
     while(!(TIFR0 & 0x02)){}
-    return;
 }
 
 /* Function: waitStart
@@ -44,8 +42,6 @@ void waitStart() {
         prev = new;
         new = PINC & 0x01;
     }
-    
-    return;
 }
 
 /* Function: sendChar
@@ -57,6 +53,7 @@ void waitStart() {
  */
 void sendChar(int c) {
     int tx_bit;
+    int prev = 0x00;
     
     // Send start bit
     PORTD = 0x00;
@@ -65,13 +62,15 @@ void sendChar(int c) {
     // loops through each bit in the integer byte
     for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
         tx_bit = c & (0x80 >> bit_idx); 
-        
         // if bit is a 1, transmit high
-        // else transmit low 
+        // else transmit low
+        prev = prev << 1;
         if(tx_bit) {
-            PORTD = 0x01;
+            prev |= 0x01;
+            PORTD = prev;
         } else {
-            PORTD = 0x00;
+            prev &= 0xFE;
+            PORTD = prev;
         }
         delay(1000 / BAUD_RATE);
     }
@@ -90,10 +89,12 @@ void sendChar(int c) {
  */
 int readChar() {
     int input_bit;
-    int data_byte = 0;
-    int scalar = 128;
+//    int data_byte = 0;
+//    int scalar = 128;
+    int prev = 0x00;
     
     waitStart();
+    delay((1000 / BAUD_RATE));
     
     // Drive PB1 high, indicating that a start signal has been detected
     PORTB = 0x02;
@@ -101,8 +102,19 @@ int readChar() {
     // Read in data bit by bit
     for(int bit_idx = 0; bit_idx < 8; bit_idx++) {
         input_bit = PINC;
-        data_byte += scalar * input_bit;
-        scalar = scalar / 2;
+//        data_byte += scalar * input_bit;
+//        scalar = scalar / 2;
+        
+        prev = prev << 1;
+        
+        if(input_bit) {
+            prev |= 0x01;
+            PORTD = prev;
+        } else {
+            prev &= 0xFE;
+            PORTD = prev;
+        }
+        
         delay(1000 / BAUD_RATE);
     }
     
@@ -110,9 +122,10 @@ int readChar() {
     delay((1000 / BAUD_RATE));
     // Drive PB1 low, reseting start signal indicator
     PORTB = 0x00;
+    PORTD = 0x00;
     delay((1000 / BAUD_RATE));
     
-    return data_byte;
+    return prev;
 }
 
 int main(void) {
@@ -124,7 +137,7 @@ int main(void) {
     if(TRANSMIT) {
         
         // Set GPIO port directions
-        DDRD = 0x01;
+        DDRD = 0xFF;
         DDRB = 0x02;
 
         // Transmitter code
@@ -133,9 +146,9 @@ int main(void) {
         while(1){
             // Start Idle signal
             PORTD = 0x01;
-            
+              
             //delay approx 10 seconds
-            for(int i = 0; i < 40; i++) {
+            for(int i = 0; i < RESET_DELAY * 4; i++) {
                 delay(255);
             }
             
@@ -173,7 +186,7 @@ int main(void) {
             for(int c = 0; c < MESSAGE_LENGTH; c++) {
                 PORTD = receiveArray[c];
                 for(int i = 0; i < 8; i++) {
-                    delay(245);
+                    delay(((RESET_DELAY * 1020) / 40) - 10);
                 }
             }
         }
