@@ -12,7 +12,6 @@
 #define RESET_DELAY 5
 #define TRANSMIT 1  // 1 for transmitter, 0 for reciever
 
-
 /* Function: delay
  * --------------------------------------------------------
  * Creates delay of length ms
@@ -43,6 +42,7 @@ void waitStart() {
         new = PINC & 0x01;
     }
 }
+
 
 /* Function: sendChar
  * --------------------------------------------------------
@@ -79,6 +79,7 @@ void sendChar(int c) {
     PORTD = 0x01;
     delay((1000 / BAUD_RATE) * 2);
 }
+
 
 /* Function: readChar
  * --------------------------------------------------------
@@ -127,6 +128,7 @@ int readChar() {
     
     return prev;
 }
+
 
 int main(void) {
 
