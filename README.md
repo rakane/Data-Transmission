@@ -5,7 +5,25 @@
 Data transmission program for the ATmega328P microcontroller, including a transmitter and receiver. The program is uploaded using a microchip SNAP In-circuit Debugger/Programmer, and the code is written in the MPLAB X IDE. The ATmega328P is connected using SPI mode, and the pin connections to the SNAP are as follows:
 
 
-### SNAP to ATmega pin out
+### Project Structure
+.<br>
+|---- assets&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# README assets <br>
+|---- header.h&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Header file<br>
+|---- main.c &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Main driver program <br>
+|---- transmitter.c &nbsp;&nbsp;&nbsp;# Transmitter program<br>
+|---- receiver.c &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Receiver program<br>
+|---- README &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# README<br>
+|---- LICENSE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# LICENSE<br>
+
+
+### Circuit Diagram
+The pin labels correspond to the Arduino pins, but are in the same location.
+Refer to the [ATmega328P Datasheet](http://ww1.microchip.com/downloads/en/DeviceDoc/ATmega48A-PA-88A-PA-168A-PA-328-P-DS-DS40002061A.pdf) for the pinout
+
+![Circuit Diagram](assets/CircuitDiagram.PNG)
+
+
+### SNAP to ATmega328P pin out
 
 SNAP | ATmega328P
 -------- | ---------
@@ -15,13 +33,6 @@ MISO (pin 4) | PB4 (pin 18)
 SCK (pin 5) | PB5 (pin 19)
 NRESET (pin 6) | PC6 (pin 1)
 MOSI (pin 7) | PB3 (pin 17)
-
-### Circuit Diagram
-The pin labels correspond to the Arduino pins, but are in the same location.
-Refer to the [ATmega328P Datasheet](http://ww1.microchip.com/downloads/en/DeviceDoc/ATmega48A-PA-88A-PA-168A-PA-328-P-DS-DS40002061A.pdf) for the pinout
-
-![Circuit Diagram](assets/CircuitDiagram.PNG)
-
 
 
 ### Communication protocol
